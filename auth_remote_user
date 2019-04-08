@@ -1,0 +1,42 @@
+#!/usr/bin/env python3
+'''
+Ext filter that will validate POST requests and make sure REMOTE_USER is used
+as username. This enables to use Saltstack's sharedsecret auth module and we
+can use technologies as Kerberos GSSAPI to authenticate an API user to
+Saltstack. For more information, visit:
+https://github.com/stockholmuniversity/salt-netapi-remoteuser-auth
+'''
+
+import os
+import sys
+import urllib.parse
+
+import yaml
+
+REMOTE_USER = os.environ.get('REMOTE_USER')
+SHARED_SECRET_CONFIG = os.environ.get('SHARED_SECRET_CONFIG')
+
+if REMOTE_USER is None or SHARED_SECRET_CONFIG is None:
+    sys.exit(1)
+
+INDATA = sys.stdin.read()
+
+YAML_DATA = {}
+with open(SHARED_SECRET_CONFIG, 'r') as stream:
+    try:
+        YAML_DATA = yaml.load(stream)
+    except yaml.YAMLError as exc:
+        sys.exit(1)
+
+SHAREDSECRET = YAML_DATA.get('sharedsecret')
+if SHAREDSECRET is None:
+    sys.exit(1)
+
+INDATA_DICT = urllib.parse.parse_qs(INDATA)
+
+INDATA_DICT.update(username=REMOTE_USER)
+INDATA_DICT.update(password=SHAREDSECRET)
+INDATA_DICT.update(eauth='sharedsecret')
+
+REQUEST_PARAMETERS = urllib.parse.urlencode(INDATA_DICT, doseq=True)
+print(REQUEST_PARAMETERS, end='')
