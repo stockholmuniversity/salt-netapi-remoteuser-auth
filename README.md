@@ -1,6 +1,6 @@
 # Salt Netapi REMOTE_USER auth
 
-This module is used to authenticate to Saltstack REST API via REMOTE_USER. It depends on using Salt's [shared secret auth backend](https://docs.saltstack.com/en/latest/ref/auth/all/salt.auth.sharedsecret.html). It will verify all API requests and make sure the "username" parameter is not set to anything else than REMOTE_USER. This works with SPNEGO, Kerberos, GSSAPI, and anything really that will set the REMOTE_USER variable.
+This module is used to authenticate to Saltstack REST API via REMOTE_USER. It depends on using Salt's [shared secret auth backend](https://docs.saltstack.com/en/latest/ref/auth/all/salt.auth.sharedsecret.html). It will verify all API requests and make sure the "username" parameter is not set to anything else than REMOTE_USER. This works with any Apache (or other webserver really) module which uses REMOTE_USER to expose the authenticated username to the application. Examples of this is https://github.com/modauthgssapi/mod_auth_gssapi, mod_auth* etc.
 
 This has been tested with Apache2 as web frontend, but it should be possible to use with others that can take input and send to output through a filter.
 
@@ -18,6 +18,8 @@ external_auth:
   sharedsecret:
     'foo@EXAMPLE.COM':
       - '.*'
+
+sharedsecret: <your shared secret>
 ```
 
 ### Apache configuration
