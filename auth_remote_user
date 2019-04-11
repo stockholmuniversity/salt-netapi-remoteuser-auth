@@ -7,36 +7,59 @@ Saltstack. For more information, visit:
 https://github.com/stockholmuniversity/salt-netapi-remoteuser-auth
 '''
 
+import json
 import os
 import sys
 import urllib.parse
 
 import yaml
 
-REMOTE_USER = os.environ.get('REMOTE_USER')
-SHARED_SECRET_CONFIG = os.environ.get('SHARED_SECRET_CONFIG')
 
-if REMOTE_USER is None or SHARED_SECRET_CONFIG is None:
-    sys.exit(1)
+def update_indata_dict(indata_dict, remote_user, sharedsecret):
+    ''' Always update username to REMOTE_USER. This will prevent a user to
+        tamper with the username parameter.
+    '''
+    indata_dict.update(username=remote_user)
+    indata_dict.update(password=sharedsecret)
+    indata_dict.update(eauth='sharedsecret')
 
-INDATA = sys.stdin.read()
 
-YAML_DATA = {}
-with open(SHARED_SECRET_CONFIG, 'r') as stream:
-    try:
-        YAML_DATA = yaml.load(stream)
-    except yaml.YAMLError as exc:
+def main(stdin):
+    ''' Take data on standard in and make sure we are setting username to
+        REMOTE_USER.
+    '''
+    remote_user = os.environ.get('REMOTE_USER')
+    shared_secret_config = os.environ.get('SHARED_SECRET_CONFIG')
+
+    if remote_user is None or shared_secret_config is None:
         sys.exit(1)
 
-SHAREDSECRET = YAML_DATA.get('sharedsecret')
-if SHAREDSECRET is None:
-    sys.exit(1)
+    indata = stdin.read()
 
-INDATA_DICT = urllib.parse.parse_qs(INDATA)
+    yaml_data = {}
+    with open(shared_secret_config, 'r') as stream:
+        try:
+            yaml_data = yaml.load(stream)
+        except yaml.YAMLError:
+            sys.exit(1)
 
-INDATA_DICT.update(username=REMOTE_USER)
-INDATA_DICT.update(password=SHAREDSECRET)
-INDATA_DICT.update(eauth='sharedsecret')
+    sharedsecret = yaml_data.get('sharedsecret')
+    if sharedsecret is None:
+        sys.exit(1)
 
-REQUEST_PARAMETERS = urllib.parse.urlencode(INDATA_DICT, doseq=True)
-print(REQUEST_PARAMETERS, end='')
+    indata_dict = {}
+    request_parameters = ""
+    if os.environ.get('CONTENT_TYPE') == 'application/x-www-form-urlencoded':
+        indata_dict = urllib.parse.parse_qs(indata)
+        update_indata_dict(indata_dict, remote_user, sharedsecret)
+        request_parameters = urllib.parse.urlencode(indata_dict, doseq=True)
+    elif os.environ.get('CONTENT_TYPE') == 'application/json':
+        indata_dict = json.loads(indata)
+        update_indata_dict(indata_dict, remote_user, sharedsecret)
+        request_parameters = json.dumps(indata_dict)
+
+    print(request_parameters)
+
+
+if __name__ == "__main__":
+    main(sys.stdin)
