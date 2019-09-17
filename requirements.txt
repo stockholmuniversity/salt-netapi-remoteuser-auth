@@ -1,1 +1,2 @@
 pyyaml >= 3.12
+su-logging[structured] >= 0.2

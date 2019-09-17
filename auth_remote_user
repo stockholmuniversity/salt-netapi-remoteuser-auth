@@ -13,6 +13,7 @@ import sys
 import urllib.parse
 
 import yaml
+from su.logging import structured, logging  # noqa: F401
 
 
 def update_indata_dict(indata_dict, remote_user, sharedsecret):
@@ -28,35 +29,62 @@ def main(stdin):
     ''' Take data on standard in and make sure we are setting username to
         REMOTE_USER.
     '''
+
+    logger = logging.getLogger("auth_remote_user")
+    logger.setLevel(logging.INFO)
+
     remote_user = os.environ.get('REMOTE_USER')
     shared_secret_config = os.environ.get('SHARED_SECRET_CONFIG')
 
     if remote_user is None or shared_secret_config is None:
+        logger.error("Can't find required environment variables: {env}".format(
+            env={
+                "remote_user": remote_user,
+                "shared_secret_config": shared_secret_config,
+                }
+            ))
         sys.exit(1)
 
     indata = stdin.read()
 
     yaml_data = {}
-    with open(shared_secret_config, 'r') as stream:
-        try:
-            yaml_data = yaml.load(stream)
-        except yaml.YAMLError:
-            sys.exit(1)
+    try:
+        with open(shared_secret_config, 'r') as stream:
+            yaml_data = yaml.safe_load(stream)
+    except (yaml.YAMLError, FileNotFoundError) as e:
+        logging.exception(e)
+        sys.exit(1)
 
     sharedsecret = yaml_data.get('sharedsecret')
     if sharedsecret is None:
+        logging.error("Can't find sharedsecret")
         sys.exit(1)
 
     indata_dict = {}
     request_parameters = ""
     if os.environ.get('CONTENT_TYPE') == 'application/x-www-form-urlencoded':
+        logging.debug("Handling a {} request" % os.environ.get('CONTENT_TYPE'))
         indata_dict = urllib.parse.parse_qs(indata)
         update_indata_dict(indata_dict, remote_user, sharedsecret)
         request_parameters = urllib.parse.urlencode(indata_dict, doseq=True)
     elif os.environ.get('CONTENT_TYPE') == 'application/json':
-        indata_dict = json.loads(indata)
+        logging.debug("Handling a {} request".format(
+            os.environ.get('CONTENT_TYPE')
+            ))
+        indata_dict = None
+        try:
+            indata_dict = json.loads(indata)
+        except json.decoder.JSONDecodeError as e:
+            logging.exception(e)
+            sys.exit(1)
         update_indata_dict(indata_dict, remote_user, sharedsecret)
         request_parameters = json.dumps(indata_dict)
+    else:
+        logging.error(
+            "Unknown request with content_type={content_type}".format(
+                content_type=os.environ.get('CONTENT_TYPE'),
+                ))
+        sys.exit(1)
 
     print(request_parameters)
 
