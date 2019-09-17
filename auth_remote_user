@@ -79,6 +79,12 @@ def main(stdin):
             sys.exit(1)
         update_indata_dict(indata_dict, remote_user, sharedsecret)
         request_parameters = json.dumps(indata_dict)
+    else:
+        logging.error(
+            "Unknown request with content_type={content_type}".format(
+                content_type=os.environ.get('CONTENT_TYPE'),
+                ))
+        sys.exit(1)
 
     print(request_parameters)
 
