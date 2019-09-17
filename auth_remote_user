@@ -57,6 +57,7 @@ def main(stdin):
 
     sharedsecret = yaml_data.get('sharedsecret')
     if sharedsecret is None:
+        logging.error("Can't find sharedsecret")
         sys.exit(1)
 
     indata_dict = {}
