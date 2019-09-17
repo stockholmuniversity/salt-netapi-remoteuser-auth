@@ -37,6 +37,12 @@ def main(stdin):
     shared_secret_config = os.environ.get('SHARED_SECRET_CONFIG')
 
     if remote_user is None or shared_secret_config is None:
+        logger.error("Can't find required environment variables: {env}".format(
+            env={
+                "remote_user": remote_user,
+                "shared_secret_config": shared_secret_config,
+                }
+            ))
         sys.exit(1)
 
     indata = stdin.read()
