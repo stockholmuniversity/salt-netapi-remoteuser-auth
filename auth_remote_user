@@ -48,11 +48,12 @@ def main(stdin):
     indata = stdin.read()
 
     yaml_data = {}
-    with open(shared_secret_config, 'r') as stream:
-        try:
-            yaml_data = yaml.load(stream)
-        except yaml.YAMLError:
-            sys.exit(1)
+    try:
+        with open(shared_secret_config, 'r') as stream:
+            yaml_data = yaml.safe_load(stream)
+    except (yaml.YAMLError, FileNotFoundError) as e:
+        logging.exception(e)
+        sys.exit(1)
 
     sharedsecret = yaml_data.get('sharedsecret')
     if sharedsecret is None:
