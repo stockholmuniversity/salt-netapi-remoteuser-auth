@@ -12,7 +12,9 @@ import os
 import sys
 import urllib.parse
 
+# pylint: disable=import-error
 import yaml
+# pylint: disable=unused-import
 from su.logging import structured, logging  # noqa: F401
 
 
@@ -51,6 +53,7 @@ def main(stdin):
     try:
         with open(shared_secret_config, 'r') as stream:
             yaml_data = yaml.safe_load(stream)
+    # pylint: disable=invalid-name
     except (yaml.YAMLError, FileNotFoundError) as e:
         logging.exception(e)
         sys.exit(1)
@@ -74,6 +77,7 @@ def main(stdin):
         indata_dict = None
         try:
             indata_dict = json.loads(indata)
+        # pylint: disable=invalid-name
         except json.decoder.JSONDecodeError as e:
             logging.exception(e)
             sys.exit(1)
