@@ -15,7 +15,7 @@ import urllib.parse
 # pylint: disable=import-error
 import yaml
 # pylint: disable=unused-import
-from su.logging import structured, logging  # noqa: F401
+from su.logging import logging, structured  # noqa: F401
 
 
 def update_indata_dict(indata_dict, remote_user, sharedsecret):
@@ -43,8 +43,7 @@ def main(stdin):
             env={
                 "remote_user": remote_user,
                 "shared_secret_config": shared_secret_config,
-                }
-            ))
+            }))
         sys.exit(1)
 
     indata = stdin.read()
@@ -72,8 +71,7 @@ def main(stdin):
         request_parameters = urllib.parse.urlencode(indata_dict, doseq=True)
     elif os.environ.get('CONTENT_TYPE') == 'application/json':
         logging.debug("Handling a {} request".format(
-            os.environ.get('CONTENT_TYPE')
-            ))
+            os.environ.get('CONTENT_TYPE')))
         indata_dict = None
         try:
             indata_dict = json.loads(indata)
@@ -84,10 +82,8 @@ def main(stdin):
         update_indata_dict(indata_dict, remote_user, sharedsecret)
         request_parameters = json.dumps(indata_dict)
     else:
-        logging.error(
-            "Unknown request with content_type={content_type}".format(
-                content_type=os.environ.get('CONTENT_TYPE'),
-                ))
+        logging.error("Unknown request with content_type={}".format(
+            os.environ.get('CONTENT_TYPE')))
         sys.exit(1)
 
     print(request_parameters)
