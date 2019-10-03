@@ -10,6 +10,7 @@ https://github.com/stockholmuniversity/salt-netapi-remoteuser-auth
 import argparse
 import json
 import os
+import re
 import sys
 import unittest
 import urllib.parse
@@ -89,6 +90,27 @@ def main(stdin):
         sys.exit(1)
 
     print(request_parameters)
+
+
+def authz_regex(username=os.getenv("REMOTE_USER")):
+    """
+    Authorizes a username based on a regex.
+
+    Also provides the option to modify the username via a capture group. The
+    first group is used as the username.
+    """
+    if username is None:
+        return None
+    match = re.match(os.environ["REMOTE_USER_PATTERN"], username)
+    if match is not None:
+        return match.group(1)
+    return None
+
+
+class SaltAuthZTest(unittest.TestCase):
+    # pylint: disable=missing-docstring
+    def test_root(self):
+        self.assertEqual('simlu', "simlu")
 
 
 if __name__ == "__main__":
