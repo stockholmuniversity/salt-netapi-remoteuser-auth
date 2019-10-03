@@ -109,9 +109,48 @@ def authz_regex(username=os.getenv("REMOTE_USER"),
 
 
 class SaltAuthZTest(unittest.TestCase):
-    # pylint: disable=missing-docstring
+    # pylint: disable=missing-docstring,anomalous-backslash-in-string
+
+    remote_user_pattern = '^(.+?)\/root@SU\.SE$'  # noqa: W605
+
     def test_root(self):
-        self.assertEqual('simlu', "simlu")
+        self.assertEqual(
+            authz_regex(username="simlu/root@SU.SE",
+                        pattern=self.remote_user_pattern), "simlu")
+
+    def test_hackerman(self):
+        self.assertEqual(
+            authz_regex(username="/root@SU.SE",
+                        pattern=self.remote_user_pattern), None)
+
+    def test_a(self):
+        self.assertEqual(
+            authz_regex(username="a/root@SU.SE",
+                        pattern=self.remote_user_pattern), "a")
+
+    def test_admin(self):
+        self.assertEqual(
+            authz_regex(username="simlu/admin@SU.SE",
+                        pattern=self.remote_user_pattern), None)
+
+    def test_regular(self):
+        self.assertEqual(
+            authz_regex(username="simlu@SU.SE",
+                        pattern=self.remote_user_pattern), None)
+
+    def test_regular_no_realm(self):
+        self.assertEqual(
+            authz_regex(username="simlu", pattern=self.remote_user_pattern),
+            None)
+
+    def test_nada(self):
+        self.assertEqual(authz_regex(), None)
+
+    def test_none(self):
+        self.assertEqual(authz_regex(username=None), None)
+
+    def test_none_everything(self):
+        self.assertEqual(authz_regex(username=None, pattern=None), None)
 
 
 if __name__ == "__main__":
