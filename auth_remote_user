@@ -92,16 +92,17 @@ def main(stdin):
     print(request_parameters)
 
 
-def authz_regex(username=os.getenv("REMOTE_USER")):
+def authz_regex(username=os.getenv("REMOTE_USER"),
+                pattern=os.getenv("REMOTE_USER_PATTERN")):
     """
     Authorizes a username based on a regex.
 
     Also provides the option to modify the username via a capture group. The
     first group is used as the username.
     """
-    if username is None:
+    if username is None or pattern is None:
         return None
-    match = re.match(os.environ["REMOTE_USER_PATTERN"], username)
+    match = re.match(pattern, username)
     if match is not None:
         return match.group(1)
     return None
