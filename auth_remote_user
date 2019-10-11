@@ -93,18 +93,24 @@ def main(stdin):
 
 
 def authz_regex(username=os.getenv("REMOTE_USER"),
-                pattern=os.getenv("REMOTE_USER_PATTERN")):
+                pattern=os.getenv("REMOTE_USER_PATTERN", "")):
     """
     Authorizes a username based on a regex.
 
     Also provides the option to modify the username via a capture group. The
     first group is used as the username.
     """
-    if username is None or pattern is None:
+    if username is None:
         return None
     match = re.match(pattern, username)
+    # The regex matched grouped or not
     if match is not None:
-        return match.group(1)
+        matched_username = None
+        try:
+            matched_username = match.group(1)
+        except IndexError:
+            return username
+        return matched_username
     return None
 
 
@@ -142,6 +148,9 @@ class SaltAuthZTest(unittest.TestCase):
         self.assertEqual(
             authz_regex(username="simlu", pattern=self.remote_user_pattern),
             None)
+
+    def test_regular_no_pattern(self):
+        self.assertEqual(authz_regex(username="simlu@SU.SE"), "simlu@SU.SE")
 
     def test_nada(self):
         self.assertEqual(authz_regex(), None)
