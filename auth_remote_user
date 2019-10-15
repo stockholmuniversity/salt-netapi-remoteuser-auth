@@ -152,6 +152,15 @@ class SaltAuthZTest(unittest.TestCase):
     def test_regular_no_pattern(self):
         self.assertEqual(authz_regex(username="simlu@SU.SE"), "simlu@SU.SE")
 
+    def test_realm_pattern_allowed(self):
+        self.assertEqual(
+            authz_regex(username="simlu@SU.SE", pattern=r".*@SU\.SE$"),
+            "simlu@SU.SE")
+
+    def test_realm_pattern_denied(self):
+        self.assertEqual(
+            authz_regex(username="simlu@SOY.SE", pattern=r".*@SU\.SE$"), None)
+
     def test_nada(self):
         self.assertEqual(authz_regex(), None)
 
