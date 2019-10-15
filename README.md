@@ -51,6 +51,29 @@ ExtFilterDefine setRemoteUserAsUsername mode=input cmd="/path/to/script/auth_rem
 </LocationMatch>
 ```
 
+### Optional authorization and username rewrite
+
+Using the environment variable `REMOTE_USER_PATTERN` you can do authorization
+and also username rewrite.
+
+#### authZ
+Say you only want to allow users from the `@SU.SE`
+realm you can do so with:
+
+```apache
+SetEnvIf Request_Method POST REMOTE_USER_PATTERN=.*@SU\.SE$
+```
+
+#### Username rewrite
+If you want to rewrite the username from e.g. an administrative principal to a
+regular user because the regular user is a member of an LDAP-group that you
+want to reuse (but still use a different set of credentials) you can do like
+this:
+```apache
+SetEnvIf Request_Method POST REMOTE_USER_PATTERN=^(.+?)\/root@SU\.SE$
+```
+The first group matched will be used.
+
 ## Example run
 
 Since the auth script will set some parameters for us, we don't need to explicitly set them in the client:
