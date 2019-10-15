@@ -13,7 +13,7 @@ Put the auth_remote_user somewhere on the Salt master, e.g /path/to/script/auth_
 Setup sharedsecret in your Salt master config, see: https://docs.saltstack.com/en/latest/ref/auth/all/salt.auth.sharedsecret.html
 
 Example:
-```
+```yaml
 external_auth:
   sharedsecret:
     'foo@EXAMPLE.COM':
@@ -25,7 +25,7 @@ sharedsecret: <your shared secret>
 ### Apache configuration
 Enable the [ext_filter](https://httpd.apache.org/docs/2.4/mod/mod_ext_filter.html) apache module.
 Set environment variable SHARED_SECRET_CONFIG and add ext filter to your apache site config:
-```
+```apache
 SetEnvIf Request_Method POST SHARED_SECRET_CONFIG=/path/to/salt/master.d/sharedsecret.conf
 ExtFilterDefine setRemoteUserAsUsername mode=input cmd="/path/to/script/auth_remote_user"
 
