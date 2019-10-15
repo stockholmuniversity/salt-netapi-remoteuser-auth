@@ -6,8 +6,14 @@ This has been tested with Apache2 as web frontend, but it should be possible to 
 
 ## Usage
 
-### Download auth_remote_user script
-Put the auth_remote_user somewhere on the Salt master, e.g /path/to/script/auth_remote_user.
+### Install into a virtualenv
+```
+$ git clone https://github.com/stockholmuniversity/salt-netapi-remoteuser-auth/
+$ python3 -m virtualenv salt-netapi-remoteuser-auth
+$ cd salt-netapi-remoteuser-auth && source bin/activate
+$ pip3 install -r requirements.txt
+$ ./auth_remote_user --test # Run tests validate that everything works
+```
 
 ### Shared Secret External Auth
 Setup sharedsecret in your Salt master config, see: https://docs.saltstack.com/en/latest/ref/auth/all/salt.auth.sharedsecret.html
