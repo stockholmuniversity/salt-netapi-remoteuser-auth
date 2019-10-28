@@ -57,35 +57,35 @@ def main(stdin):
             yaml_data = yaml.safe_load(stream)
     # pylint: disable=invalid-name
     except (yaml.YAMLError, FileNotFoundError) as e:
-        logging.exception(e)
+        logger.exception(e)
         sys.exit(1)
 
     sharedsecret = yaml_data.get('sharedsecret')
     if sharedsecret is None:
-        logging.error("Can't find sharedsecret")
+        logger.error("Can't find sharedsecret")
         sys.exit(1)
 
     indata_dict = {}
     request_parameters = ""
     if os.environ.get('CONTENT_TYPE') == 'application/x-www-form-urlencoded':
-        logging.debug("Handling a {} request" % os.environ.get('CONTENT_TYPE'))
+        logger.debug("Handling a {} request" % os.environ.get('CONTENT_TYPE'))
         indata_dict = urllib.parse.parse_qs(indata)
         update_indata_dict(indata_dict, remote_user, sharedsecret)
         request_parameters = urllib.parse.urlencode(indata_dict, doseq=True)
     elif os.environ.get('CONTENT_TYPE') == 'application/json':
-        logging.debug("Handling a {} request".format(
+        logger.debug("Handling a {} request".format(
             os.environ.get('CONTENT_TYPE')))
         indata_dict = None
         try:
             indata_dict = json.loads(indata)
         # pylint: disable=invalid-name
         except json.decoder.JSONDecodeError as e:
-            logging.exception(e)
+            logger.exception(e)
             sys.exit(1)
         update_indata_dict(indata_dict, remote_user, sharedsecret)
         request_parameters = json.dumps(indata_dict)
     else:
-        logging.error("Unknown request with content_type={}".format(
+        logger.error("Unknown request with content_type={}".format(
             os.environ.get('CONTENT_TYPE')))
         sys.exit(1)
 
