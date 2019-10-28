@@ -30,6 +30,19 @@ def update_indata_dict(indata_dict, remote_user, sharedsecret):
     indata_dict.update(eauth='sharedsecret')
 
 
+def update_indata_lowstate(indata, remote_user, sharedsecret):
+    ''' When using JSON for the lowstate you can send multiple lowstates as a
+    list, so we need to handle that.
+    '''
+    logging.error(type(indata))
+    if isinstance(indata, list):
+        for lowstate in indata:
+            logging.error(type(lowstate))
+            update_indata_dict(lowstate, remote_user, sharedsecret)
+    else:
+        update_indata_dict(indata, remote_user, sharedsecret)
+
+
 def main(stdin):
     ''' Take data on standard in and make sure we are setting username to
         REMOTE_USER.
@@ -71,7 +84,7 @@ def main(stdin):
         logger.debug("Handling a {} request".format(
             os.environ.get('CONTENT_TYPE')))
         indata_dict = urllib.parse.parse_qs(indata)
-        update_indata_dict(indata_dict, remote_user, sharedsecret)
+        update_indata_lowstate(indata_dict, remote_user, sharedsecret)
         request_parameters = urllib.parse.urlencode(indata_dict, doseq=True)
     elif os.environ.get('CONTENT_TYPE') == 'application/json':
         logger.debug("Handling a {} request".format(
@@ -83,7 +96,7 @@ def main(stdin):
         except json.decoder.JSONDecodeError as e:
             logger.exception(e)
             sys.exit(1)
-        update_indata_dict(indata_dict, remote_user, sharedsecret)
+        update_indata_lowstate(indata_dict, remote_user, sharedsecret)
         request_parameters = json.dumps(indata_dict)
     else:
         logger.error("Unknown request with content_type={}".format(
