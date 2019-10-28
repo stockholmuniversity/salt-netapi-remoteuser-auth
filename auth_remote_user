@@ -68,7 +68,8 @@ def main(stdin):
     indata_dict = {}
     request_parameters = ""
     if os.environ.get('CONTENT_TYPE') == 'application/x-www-form-urlencoded':
-        logger.debug("Handling a {} request" % os.environ.get('CONTENT_TYPE'))
+        logger.debug("Handling a {} request".format(
+            os.environ.get('CONTENT_TYPE')))
         indata_dict = urllib.parse.parse_qs(indata)
         update_indata_dict(indata_dict, remote_user, sharedsecret)
         request_parameters = urllib.parse.urlencode(indata_dict, doseq=True)
