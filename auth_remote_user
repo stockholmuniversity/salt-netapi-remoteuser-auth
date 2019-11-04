@@ -185,6 +185,35 @@ class SaltAuthZTest(unittest.TestCase):
         self.assertEqual(authz_regex(username=None, pattern=None), None)
 
 
+class SaltAuthZMultiUserTest(unittest.TestCase):
+    # pylint: disable=missing-docstring,anomalous-backslash-in-string
+
+    remote_user_pattern = r'^(su-.+?|.+?(?=\/root))(?:\/root)?@SU\.SE$'
+
+    def test_regular(self):
+        self.assertEqual(
+            authz_regex(username="simlu@SU.SE",
+                        pattern=self.remote_user_pattern), None)
+
+    def test_serviceaccount(self):
+        self.assertEqual(
+            authz_regex(username="su-ci-prod@SU.SE",
+                        pattern=self.remote_user_pattern),
+            'su-ci-prod')
+
+    def test_root(self):
+        self.assertEqual(
+            authz_regex(username="simlu/root@SU.SE",
+                        pattern=self.remote_user_pattern),
+            'simlu')
+
+    def test_ppp(self):
+        self.assertEqual(
+            authz_regex(username="simlu/ppp@SU.SE",
+                        pattern=self.remote_user_pattern),
+            None)
+
+
 if __name__ == "__main__":
     PARSER = argparse.ArgumentParser(
         description='Authenticate REMOTE_USER for Salt NetAPI')
