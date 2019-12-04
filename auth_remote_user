@@ -196,20 +196,17 @@ class SaltAuthZMultiUserTest(unittest.TestCase):
     def test_serviceaccount(self):
         self.assertEqual(
             authz_regex(username="su-ci-prod@SU.SE",
-                        pattern=self.remote_user_pattern),
-            'su-ci-prod')
+                        pattern=self.remote_user_pattern), 'su-ci-prod')
 
     def test_root(self):
         self.assertEqual(
             authz_regex(username="simlu/root@SU.SE",
-                        pattern=self.remote_user_pattern),
-            'simlu')
+                        pattern=self.remote_user_pattern), 'simlu')
 
     def test_ppp(self):
         self.assertEqual(
             authz_regex(username="simlu/ppp@SU.SE",
-                        pattern=self.remote_user_pattern),
-            None)
+                        pattern=self.remote_user_pattern), None)
 
 
 if __name__ == "__main__":
