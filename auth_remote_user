@@ -21,24 +21,26 @@ import yaml
 from su.logging import logging, structured  # noqa: F401
 
 
-def update_indata_dict(indata_dict, remote_user, sharedsecret):
+def update_indata_dict(indata_dict, remote_user, password, eauth):
     ''' Always update username to REMOTE_USER. This will prevent a user to
         tamper with the username parameter.
     '''
     indata_dict.update(username=remote_user)
-    indata_dict.update(password=sharedsecret)
-    indata_dict.update(eauth='sharedsecret')
+    # Only update password when it isn't changed by sharedsecret
+    if password is not None:
+        indata_dict.update(password=password)
+    indata_dict.update(eauth=eauth)
 
 
-def update_indata_lowstate(indata, remote_user, sharedsecret):
+def update_indata_lowstate(indata, remote_user, password, eauth):
     ''' When using JSON for the lowstate you can send multiple lowstates as a
     list, so we need to handle that.
     '''
     if isinstance(indata, list):
         for lowstate in indata:
-            update_indata_dict(lowstate, remote_user, sharedsecret)
+            update_indata_dict(lowstate, remote_user, password, eauth)
     else:
-        update_indata_dict(indata, remote_user, sharedsecret)
+        update_indata_dict(indata, remote_user, password, eauth)
 
 
 def main(stdin):
@@ -49,32 +51,42 @@ def main(stdin):
     logger = logging.getLogger("auth_remote_user")
     logger.setLevel(logging.INFO)
 
-    remote_user = authz_regex()
-    shared_secret_config = os.environ.get('SHARED_SECRET_CONFIG')
-
-    if remote_user is None or shared_secret_config is None:
-        logger.error("Can't find required environment variables: {env}".format(
-            env={
-                "remote_user": remote_user,
-                "shared_secret_config": shared_secret_config,
-            }))
+    remote_user = os.getenv("REMOTE_USER")
+    if remote_user is None:
+        logger.error("REMOTE_USER isn't set, check your configuration.")
         sys.exit(1)
+
+    remote_user = authz_regex(username=remote_user)
+    password = None
+    eauth = os.environ.get('EAUTH', 'sharedsecret')
+
+    if eauth == 'sharedsecret':
+        shared_secret_config = os.environ.get('SHARED_SECRET_CONFIG')
+        if shared_secret_config is None:
+            logger.error(
+                "Can't find required environment variables: {env}".format(
+                    env={
+                        "remote_user": remote_user,
+                        "shared_secret_config": shared_secret_config,
+                    }))
+            sys.exit(1)
+
+        yaml_data = {}
+        try:
+            with open(shared_secret_config, 'r') as stream:
+                yaml_data = yaml.safe_load(stream)
+        # pylint: disable=invalid-name
+        except (yaml.YAMLError, FileNotFoundError) as e:
+            logger.exception(e)
+            sys.exit(1)
+
+        password = yaml_data.get('sharedsecret')
+        if password is None:
+            logger.error("Can't find sharedsecret in config {}".format(
+                shared_secret_config))
+            sys.exit(1)
 
     indata = stdin.read()
-
-    yaml_data = {}
-    try:
-        with open(shared_secret_config, 'r') as stream:
-            yaml_data = yaml.safe_load(stream)
-    # pylint: disable=invalid-name
-    except (yaml.YAMLError, FileNotFoundError) as e:
-        logger.exception(e)
-        sys.exit(1)
-
-    sharedsecret = yaml_data.get('sharedsecret')
-    if sharedsecret is None:
-        logger.error("Can't find sharedsecret")
-        sys.exit(1)
 
     indata_dict = {}
     request_parameters = ""
@@ -82,7 +94,7 @@ def main(stdin):
         logger.debug("Handling a {} request".format(
             os.environ.get('CONTENT_TYPE')))
         indata_dict = urllib.parse.parse_qs(indata)
-        update_indata_lowstate(indata_dict, remote_user, sharedsecret)
+        update_indata_lowstate(indata_dict, remote_user, password, eauth)
         request_parameters = urllib.parse.urlencode(indata_dict, doseq=True)
     elif os.environ.get('CONTENT_TYPE') == 'application/json':
         logger.debug("Handling a {} request".format(
@@ -94,7 +106,7 @@ def main(stdin):
         except json.decoder.JSONDecodeError as e:
             logger.exception(e)
             sys.exit(1)
-        update_indata_lowstate(indata_dict, remote_user, sharedsecret)
+        update_indata_lowstate(indata_dict, remote_user, password, eauth)
         request_parameters = json.dumps(indata_dict)
     else:
         logger.error("Unknown request with content_type={}".format(

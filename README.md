@@ -1,6 +1,6 @@
 # Salt Netapi REMOTE_USER auth
 
-This module is used to authenticate to Saltstack REST API via REMOTE_USER. It depends on using Salt's [shared secret auth backend](https://docs.saltstack.com/en/latest/ref/auth/all/salt.auth.sharedsecret.html). It will verify all API requests and make sure the "username" parameter is not set to anything else than REMOTE_USER. This works with any Apache (or other webserver really) module which uses REMOTE_USER to expose the authenticated username to the application. Examples of this is https://github.com/modauthgssapi/mod_auth_gssapi, mod_auth* etc. If header X-Auth-Token is set then Apache should not care about REMOTE_USER, but let Salt handle authentication and authorization.
+This module is used to authenticate to Saltstack REST API via REMOTE_USER. It supports multiple [auth backends](https://docs.saltstack.com/en/latest/ref/auth/all/index.html) but uses [shared secret auth backend](https://docs.saltstack.com/en/latest/ref/auth/all/salt.auth.sharedsecret.html) by default. It will verify all API requests and make sure the "username" parameter is not set to anything else than REMOTE_USER. This works with any Apache (or other webserver really) module which uses REMOTE_USER to expose the authenticated username to the application. Examples of this is https://github.com/modauthgssapi/mod_auth_gssapi, mod_auth* etc. If header X-Auth-Token is set then Apache should not care about REMOTE_USER, but let Salt handle authentication and authorization.
 
 This has been tested with Apache2 as web frontend, but it should be possible to use with others that can take input and send to output through a filter.
 
@@ -49,6 +49,12 @@ ExtFilterDefine setRemoteUserAsUsername mode=input cmd="/path/to/script/auth_rem
         SetInputFilter setRemoteUserAsUsername
     </If>
 </LocationMatch>
+```
+
+### Switching eauth backend
+You can switch which eauth backend salt should use, so e.g. if you want to use the rest auth backend:
+```apache
+SetEnvIf Request_Method POST EAUTH=rest
 ```
 
 ### Optional authorization and username rewrite
