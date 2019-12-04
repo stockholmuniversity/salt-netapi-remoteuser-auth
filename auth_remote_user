@@ -34,10 +34,8 @@ def update_indata_lowstate(indata, remote_user, sharedsecret):
     ''' When using JSON for the lowstate you can send multiple lowstates as a
     list, so we need to handle that.
     '''
-    logging.error(type(indata))
     if isinstance(indata, list):
         for lowstate in indata:
-            logging.error(type(lowstate))
             update_indata_dict(lowstate, remote_user, sharedsecret)
     else:
         update_indata_dict(indata, remote_user, sharedsecret)
