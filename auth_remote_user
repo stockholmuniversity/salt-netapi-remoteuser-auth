@@ -51,7 +51,7 @@ def main(stdin):
     logger = logging.getLogger("auth_remote_user")
     logger.setLevel(logging.INFO)
 
-    remote_user = os.environ.get('REMOTE_USER')
+    remote_user = authz_regex()
     shared_secret_config = os.environ.get('SHARED_SECRET_CONFIG')
 
     if remote_user is None or shared_secret_config is None:
