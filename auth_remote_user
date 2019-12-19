@@ -26,9 +26,7 @@ def update_indata_dict(indata_dict, remote_user, password, eauth):
         tamper with the username parameter.
     '''
     indata_dict.update(username=remote_user)
-    # Only update password when it isn't changed by sharedsecret
-    if password is not None:
-        indata_dict.update(password=password)
+    indata_dict.update(password=password)
     indata_dict.update(eauth=eauth)
 
 
